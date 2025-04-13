@@ -64,18 +64,21 @@ func handleGet(writer http.ResponseWriter, request *http.Request) {
 				); err != nil {
 					return nil, err
 				} else if doc == nil {
-					times = append(times, 0)
+					if sum {
+						if doc, err := db.FindFirst(
+							query.NewQuery(counter).Sort(query.SortOption{Field: "time", Direction: -1}).Where(query.Field("time").Lt(threshold)),
+						); err != nil {
+							return nil, err
+						} else if doc == nil {
+							times = append(times, 0)
+						} else {
+							times = append(times, doc.Get("value").(int64))
+						}
+					} else {
+						times = append(times, 0)
+					}
 				} else {
 					times = append(times, doc.Get("value").(int64))
-				}
-			}
-
-			if !sum {
-				for i, e := range times {
-					if i == len(times)-1 {
-						continue
-					}
-					times[i] = e - times[i+1]
 				}
 			}
 
